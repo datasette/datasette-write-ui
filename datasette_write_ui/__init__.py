@@ -3,29 +3,12 @@ from datasette.utils.asgi import Response, Forbidden
 from starlette.requests import Request
 import json
 
-async def edit_post(scope, receive, datasette, request):
-  print("post!")
-  starlette_request = Request(scope, receive)
-  print(starlette_request.query_params)
-  formdata = await starlette_request.form()
-  for key in formdata.keys():
-    if key == 'csrftoken':
-        continue
-    print(key)
 
-  # https://docs.datasette.io/en/latest/json_api.html#updating-a-row
-  update_url =  (datasette.urls.path("/<database>/<table>/<row-pks>/-/update"))
-  await datasette.client.post(update_url, data={
-    "update": {
-       "col": "val",
-    }
-  })
-  return Response.html("yo")
 
-async def edit_get(scope, receive, datasette, request):
+async def edit(scope, receive, datasette, request):
   db_name = request.args.get("db")
   table_name = request.args.get("table")
-  pks = request.args.getlist("pks")
+  pks = json.loads(request.args.get("pks"))
   print(db_name, table_name, pks)
 
   db = datasette.get_database(db_name)
@@ -41,7 +24,7 @@ async def edit_get(scope, receive, datasette, request):
 
   fields = []
   select = ", ".join(list(map(lambda column: column.get("name"), columns)))
-  where = "rowid = 1"
+  where = f"rowid = {pks[0]}"
   results = (await db.execute(f"select {select} from {table_name} where {where}"))
 
   row = results.first()
@@ -60,18 +43,12 @@ async def edit_get(scope, receive, datasette, request):
       "name": "alex 9",
       "db": db_name,
       "table": table_name,
-      "pks": json.dumps(pks),
+      "pks": pks,
       "fields": fields,
   }
   return Response.html(
       await datasette.render_template("edit.html", context, request=request)
   )
-
-async def edit(scope, receive, datasette, request):
-  if request.method == "GET":
-    return await edit_get(scope, receive, datasette, request)
-  if request.method == "POST":
-    return await edit_post(scope, receive, datasette, request)
 
 @hookimpl
 def register_routes():

@@ -4,6 +4,6 @@
 
   {{ super() }}
 
-  <a href="/-/edit?db={{database}}&table={{table}}&pks={{primary_key_values}}">Edit</a>
+  <a href="/-/edit?db={{database}}&table={{table}}&pks={{primary_key_values | tojson | urlencode}}">Edit</a>
 
 {% endblock %}

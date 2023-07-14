@@ -1,7 +1,7 @@
 create table students(
   id int primary key,
-  name text,
-  age int,
+  name text not null,
+  age int check (age >= 0),
   units_completed float,
   decade as (floor(age / 10))
 );

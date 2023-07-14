@@ -2,7 +2,7 @@
 
 {% extends "base.html" %}
 
-{% block title %} yo yo yo  {% endblock %}
+{% block title %} Edit  {% endblock %}
 
 {% block extra_head %}
 
@@ -12,76 +12,94 @@
 {% endblock %}
 
 {% block content %}
-yo {{ name }}
 
 <div>
-  <div>db<b>{{db}}</b></div>
-  <div>table<b>{{table}}</b></div>
-  <div>pks<b>{{pks}}</b></div>
-  <div>fields<b>{{fields}}</b></div>
-
+  <h2>Editing {{db}}/{{table}}</h2>
   <form action="/-/edit" method="post" enctype="multipart/form-data" id="edit">
     <input type="hidden" name="csrftoken" value="{{ csrftoken() }}">
   {% for field in fields %}
-    <div>
-      {%if field['pk'] %}🔑{% endif %}
-      <label for="{{ field['key'] }}">{{ field['key'] }}</label>
-      {% if field['type'] == 'int' %}
-        <input type="number" value="{{ field['value'] }}" name={{field['key']}} id={{field['key']}} {%if not field['editable'] %}disabled{% endif %}/>
-      {% elif field['type'] == 'float' %}
-        <input type="number" value="{{ field['value'] }}" name={{field['key']}} id={{field['key']}} {%if not field['editable'] %}disabled{% endif %}/>
-      {% elif field['type'] == 'str' %}
-        <input type="text" value="{{ field['value'] }}"  name={{field['key']}} id={{field['key']}} {%if not field['editable'] %}disabled{% endif %}/>
-      {% else %}
-        <p>unsupported type {{ field['type'] }} for {{ field['key'] }}</p>
-      {% endif %}
+    <div style="display: grid; grid-template-columns: 200px auto;">
+      <div>
+        <label for="{{ field['key'] }}">{{ field['key'] }}</label> {%if field['pk'] %}🔑{% endif %}
+      </div>
+      <div>
+        {% if field['type'] == 'int' %}
+          <input type="number" value="{{ field['value'] }}" name={{field['key']}} id={{field['key']}} {%if not field['editable'] %}disabled{% endif %}/>
+        {% elif field['type'] == 'float' %}
+          <input type="number" value="{{ field['value'] }}" name={{field['key']}} id={{field['key']}} {%if not field['editable'] %}disabled{% endif %}/>
+        {% elif field['type'] == 'str' %}
+          <textarea name={{field['key']}} id={{field['key']}} {%if not field['editable'] %}disabled{% endif %}>{{field['value']}}</textarea>
+        {% else %}
+          <p>unsupported type {{ field['type'] }} for {{ field['key'] }}</p>
+        {% endif %}
+      </div>
     </div>
   {% endfor %}
   <input type="submit" value="Submit">
   </form>
+  <pre id="result"></pre>
 </div>
-
+<script id="data" type="application/json">{{db|tojson}}</script>
 <script>
   const db = {{db | tojson}};
   const table = {{table | tojson}};
-  const fields = {{fields|tojson}};
-  console.log(db, fields);
+  const fields = {{fields | tojson}};
+  const pks = ({{pks | tojson}});
 
   const form = document.getElementById('edit');
+  const result = document.getElementById('result');
 
-  for(const field of fields) {
-    const input = form.querySelector(`#${field.key}`);
-    if (!input) {
-      console.warn("no input for", field.key)
-      continue;
+  function formValues() {
+    const values = {};
+    for(const field of fields) {
+      if(!field.editable) continue;
+      const input = form.querySelector(`#${field.key}`);
+      if (!input) {
+        console.warn("no input for", field.key)
+        continue;
+      }
+
+      if (input.getAttribute('type') === 'text' || input.tagName === 'TEXTAREA') {
+          values[field.key] = input.value;
+      }
+      else if(input.getAttribute('type') === 'number') {
+          values[field.key] = input.valueAsNumber;
+      }
     }
-    switch (input.getAttribute('type')) {
-      case 'text':
-        console.log(input.value)
-        break;
-      case 'number':
-        console.log(input.valueAsNumber)
-        break;
-    }
+    return values;
   }
+  function updateResults(contents, color) {
+    result.innerText = contents
+    result.style.background = color
+  }
+
   /**
    *  @param {FormEvent} event
    */
   function onSubmit(event){
     event.preventDefault();
-    fetch('', {
-      method: "POST",
-      headers: new Headers({
-        "X-CSRFToken": "{{ csrftoken()}}",
-      }),
-      body: JSON.stringify({
-        db,
-        table,
-        update: {
+    const body = {
+      update: {...formValues()},
+      "return": true
+    }
 
-        }
-      })
-    })
+    updateResults('⏳', '#dec733');
+
+    fetch( `/${db}/${table}/${pks.join(',')}/-/update`, {
+      method :"POST",
+      credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    }).then(async response => {
+      const data = await response.json();
+      if(response.status < 200 || response.status > 299 || !data.ok) {
+        updateResults(JSON.stringify(data.errors, null, 2), '#ffcccc')
+      }else {
+        updateResults(`Success! ${new Date().toISOString()}\n${JSON.stringify(data.row, null, 2)}`, '#99ee99')
+      }
+    }).catch(error => {
+      updateResults(error, '#ffcccc')
+    });
   }
   form.addEventListener('submit', onSubmit);
 </script>
