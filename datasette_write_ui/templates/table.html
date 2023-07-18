@@ -1,0 +1,329 @@
+{% extends "default:table.html" %}
+
+{% block content %}
+{{ super() }}
+
+<div id="edit-row-modal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2 class="modal-title"></h2>
+    <div class="modal-body"></div>
+  </div>
+</div>
+
+<button id="insert">Insert new row</button>
+
+
+
+<script type="module">
+  import {html} from "https://cdn.skypack.dev/pin/htl@v0.3.1-qo9977lsbNCN9zxLCGWT/mode=imports,min/optimized/htl.js";
+
+  class Modal {
+    constructor(root) {
+      this.root = root;
+      this.body = this.root.querySelector('.modal-body');
+      this.title = this.root.querySelector('.modal-title');
+
+      this.hide = this.hide.bind(this);
+      this.show = this.show.bind(this);
+      this.setTitle = this.setTitle.bind(this);
+      this.setBody = this.setBody.bind(this);
+
+      // close modal when the close button is pressed
+      this.root.querySelector('.close').addEventListener("click", this.hide);
+
+      // close modal when ESCAPE is pressed
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") this.hide();
+      });
+    }
+    hide() {
+      this.root.style.display = "none";
+      return this;
+    }
+    show() {
+      this.root.style.display = "block";
+      return this;
+    }
+    setTitle(text) {
+      this.title.innerText = text;
+      return this;
+    }
+    setBody(element) {
+      this.body.innerHTML = '';
+      this.body.appendChild(element);
+      return this;
+    }
+  }
+
+  class RowIcon {
+    constructor(target) {
+      this.hide = this.hide.bind(this);
+      this.show = this.show.bind(this);
+      this.toggle = this.toggle.bind(this);
+      this.addButton = this.addButton.bind(this);
+
+      this.root = html`<span class="row-icon">
+          <button class="icon">&#9881;</button>
+          <div class="menu"></div>
+        </span>`;
+      target.appendChild(this.root);
+      this.icon = this.root.querySelector('.icon');
+      this.menu = this.root.querySelector('.menu');
+
+      // when icon is clicked, toggle the menu
+      this.icon.addEventListener("click", (event) => {
+        event.stopPropagation();
+        this.toggle()
+      });
+
+      // when clicked elsewhere, hide it
+      document.addEventListener("click", this.hide);
+
+      // if escape is pressed, hide
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          this.hide()
+        }
+      });
+
+      // Prevent bubbling up to to the document and closing the menu
+      this.menu.addEventListener("click", (event) => {
+        event.stopPropagation();
+      });
+
+    }
+
+    hide() {
+      this.menu.style.display = "none";
+    }
+    show() {
+      this.menu.style.display = "block";
+    }
+    toggle() {
+      if(this.menu.style.display === "block") this.hide()
+      else this.show()
+    }
+    addButton(label, callback) {
+      this.menu.appendChild(html`<button onClick=${callback}>${label}`);
+      return this
+    }
+  }
+
+  function inputForField(field){
+    if(field.type === 'int' || field.type === 'float') {
+      return html`
+        <input
+          type=number
+          value=${field.value}
+          name=${field.key}
+          id=${field.key}
+          disabled=${!field.editable}
+          step=${field.type === 'int' ? 1 : .01}/>`
+    }
+    if(field.type === 'str') {
+      return html`
+        <textarea
+          name=${field.key}
+          id=${field.key}
+          disabled=${!field.editable}>${field.value}`
+    }
+    return html`<p>Unsupported type ${field.type} for ${field.key}</p>`
+  }
+
+  function apiEditRowDetails(db, table, primaryKeys) {
+    const params = new URLSearchParams({db, table, primaryKeys});
+    return fetch(`/-/edit-row-details?${params}`)
+      .then(response => response.json())
+  }
+  function apiInsertRowDetails(db, table) {
+    const params = new URLSearchParams({db, table});
+    return fetch(`/-/insert-row-details?${params}`)
+      .then(response => response.json())
+  }
+
+  //
+  function createEditHandler(db, table, primaryKeys) {
+    return function onEdit() {
+      apiEditRowDetails(db, table, primaryKeys).then(async data => {
+        console.log(data);
+
+        function onSubmit(event){
+          event.preventDefault();
+          const body = {
+            update: {},
+            "return": true
+          }
+
+          fetch( `/${db}/${table}/${primaryKeys}/-/update`, {
+            method :"POST",
+            credentials: 'include',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body)
+          }).then(async response => {
+            const data = await response.json();
+            if(response.status < 200 || response.status > 299 || !data.ok) {
+              console.error(data)
+            }else {
+              console.log(data)
+            }
+          }).catch(error => {
+            console.error(data)
+          });
+        }
+        const form = html`
+          <form onSubmit=${onSubmit}>
+            <div>
+              <div style="display: grid; grid-template-columns: 200px auto;">
+                ${data.fields.map(field => html.fragment`
+                  <div>
+                      <label for=${field.key}>${field.key}</label> ${field.ok ? '🔑' : ''}
+                  </div>
+                  <div>
+                    ${inputForField(field)}
+                  </div>
+                  `)}
+              </div>
+            </div>
+            <input type="submit" value="Submit">
+          </form>`;
+
+        modal
+        .setBody(form)
+        .setTitle('Editing')
+        .show();
+      })
+    }
+  }
+
+  function createDeleteHandler(db, table, primaryKeys) {
+    return function onDelete() {
+      const result = window.confirm(`Are you sure you want to delete ${db}/${table}/${primaryKeys}?`);
+      if(result) {
+        fetch( `/${db}/${table}/${primaryKeys}/-/delete`, {
+          method: "POST",
+          credentials: 'include',
+          headers: {'Content-Type': 'application/json'}
+        }).then(async response => {
+          const data = await response.json();
+          if(response.status < 200 || response.status > 299 || !data.ok) {
+            alert("errored")
+          }else {
+            alert("success")
+          }
+        }).catch(error => {
+          alert("errored")
+        });
+      }
+    }
+  }
+
+  const modal = new Modal(document.getElementById("edit-row-modal"));
+  const primaryKeyRows = document.querySelectorAll('table.rows-and-columns td.type-pk');
+
+  for(const primaryKeyRow of primaryKeyRows) {
+    const href = primaryKeyRow.querySelector('a').getAttribute('href');
+    const [_, db, table, primaryKeys] = href.split('/');
+
+    const onEdit = createEditHandler(db, table, primaryKeys);
+    const onDelete = createDeleteHandler(db, table, primaryKeys);
+
+    new RowIcon(primaryKeyRow)
+      .addButton('Edit', onEdit)
+      .addButton('Delete', onDelete);
+  }
+
+  document.querySelector('#insert').addEventListener('click', async () => {
+    const [_, db, table] = window.location.pathname.split("/");
+    let data = await apiInsertRowDetails(db, table);
+    const body = html`
+      <div>
+        ${data.fields.map(field => html`
+          <div>
+            ${JSON.stringify(field)}
+          </div>`)}
+      </div>`;
+    modal
+      .setTitle("Insert new row")
+      .setBody(body)
+    .show();
+  })
+
+
+</script>
+<style>
+  .modal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+</style>
+
+<style>
+.row-icon {
+  position: relative;
+  width: 1rem;
+  height: 1rem;
+  display: inline-block;
+}
+
+.row-icon .icon {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.row-icon .menu {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  background-color: #fefefe;
+  border: 1px solid #888;
+}
+
+.row-icon .menu button {
+  display: block;
+}
+
+td {
+  white-space: nowrap !important;
+}
+
+</style>
+{% endblock %}
