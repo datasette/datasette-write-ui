@@ -3,6 +3,12 @@ from datasette.utils.asgi import Response, Forbidden
 from starlette.requests import Request
 import json
 
+@hookimpl
+def extra_template_vars(datasette, database, table):
+    async def permission_allowed(actor, permission):
+        return await datasette.permission_allowed(actor, permission, (database, table))
+
+    return {"permission_allowed": permission_allowed}
 
 async def edit_row_details(scope, receive, datasette, request):
     db_name = request.args.get("db")

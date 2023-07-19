@@ -3,6 +3,7 @@
 {% block content %}
 {{ super() }}
 
+{% if permission_allowed(request.actor, 'insert-row') %}
 <div id="edit-row-modal" class="modal">
   <div class="modal-content">
     <span class="close">&times;</span>
@@ -10,11 +11,7 @@
     <div class="modal-body"></div>
   </div>
 </div>
-
 <button id="insert">Insert new row</button>
-
-
-
 <script type="module">
   import {html} from "https://cdn.skypack.dev/pin/htl@v0.3.1-qo9977lsbNCN9zxLCGWT/mode=imports,min/optimized/htl.js";
 
@@ -141,6 +138,37 @@
     return fetch(`/-/insert-row-details?${params}`)
       .then(response => response.json())
   }
+  function apiDelete(db, table, primaryKeys) {
+    return fetch(`/${db}/${table}/${primaryKeys}/-/delete`, {
+      method: "POST",
+      credentials: 'include',
+      headers: {'Content-Type': 'application/json'}
+    }).then(async response => {
+      const data = await response.json();
+      if(response.status < 200 || response.status > 299 || !data.ok) {
+        throw Error(data.errors)
+      }
+      return data;
+    }).catch(error => {
+      throw error;
+    });
+  }
+  function apiUpdate(db, table, primaryKeys, body) {
+    return fetch( `/${db}/${table}/${primaryKeys}/-/update`, {
+      method :"POST",
+      credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    }).then(async response => {
+      const data = await response.json();
+      if(response.status < 200 || response.status > 299 || !data.ok) {
+        throw Error(data.errors);
+      }
+      return data
+    }).catch(error => {
+      throw error;
+    });
+  }
 
   //
   function createEditHandler(db, table, primaryKeys) {
@@ -154,22 +182,8 @@
             update: {},
             "return": true
           }
-
-          fetch( `/${db}/${table}/${primaryKeys}/-/update`, {
-            method :"POST",
-            credentials: 'include',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(body)
-          }).then(async response => {
-            const data = await response.json();
-            if(response.status < 200 || response.status > 299 || !data.ok) {
-              console.error(data)
-            }else {
-              console.log(data)
-            }
-          }).catch(error => {
-            console.error(data)
-          });
+          apiUpdate(db, table, primaryKeys, body)
+            .then(() => window.location.reload())
         }
         const form = html`
           <form onSubmit=${onSubmit}>
@@ -189,9 +203,9 @@
           </form>`;
 
         modal
-        .setBody(form)
-        .setTitle('Editing')
-        .show();
+          .setBody(form)
+          .setTitle('Editing')
+          .show();
       })
     }
   }
@@ -200,20 +214,8 @@
     return function onDelete() {
       const result = window.confirm(`Are you sure you want to delete ${db}/${table}/${primaryKeys}?`);
       if(result) {
-        fetch( `/${db}/${table}/${primaryKeys}/-/delete`, {
-          method: "POST",
-          credentials: 'include',
-          headers: {'Content-Type': 'application/json'}
-        }).then(async response => {
-          const data = await response.json();
-          if(response.status < 200 || response.status > 299 || !data.ok) {
-            alert("errored")
-          }else {
-            alert("success")
-          }
-        }).catch(error => {
-          alert("errored")
-        });
+        apiDelete(db, table, primaryKeys)
+          .then(() => window.location.reload())
       }
     }
   }
@@ -243,10 +245,11 @@
             ${JSON.stringify(field)}
           </div>`)}
       </div>`;
+
     modal
       .setTitle("Insert new row")
       .setBody(body)
-    .show();
+      .show();
   })
 
 
@@ -326,4 +329,7 @@ td {
 }
 
 </style>
+
+{% endif %}
+
 {% endblock %}
