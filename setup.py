@@ -32,7 +32,7 @@ setup(
     version=VERSION,
     packages=["datasette_write_ui"],
     entry_points={"datasette": ["datasette_write_ui = datasette_write_ui"]},
-    install_requires=["datasette"],
+    install_requires=["datasette", "sqlite-utils"],
     extras_require={"test": ["pytest", "pytest-asyncio"]},
     package_data={"datasette_write_ui": ["static/*", "templates/*"]},
     python_requires=">=3.7",
