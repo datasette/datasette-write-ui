@@ -181,7 +181,6 @@ function createEditHandler(db: string, table: string, primaryKeys: string) {
         if (input.disabled) continue;
         const value =
           input.type === "number" ? input.valueAsNumber : input.value;
-        console.log(key, input, value);
         update[key] = value;
       }
       const body = {
