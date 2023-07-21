@@ -78,11 +78,9 @@ async def edit_row_details(scope, receive, datasette, request):
     results = await db.execute(
         f"select {column_list} from {table_name} where rowid = ?", [pks]
     )
-    print(pks)
 
     fields = []
     row = results.first()
-    print(row[0], row[1])
     for column in columns:
         value = row[column["name"]]
         fields.append(
