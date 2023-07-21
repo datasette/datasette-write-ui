@@ -3,255 +3,23 @@
 {% block content %}
 {{ super() }}
 
+<script id="datasette-write-ui-permissions" type="application/json">{{
+    {
+    "can_insert": permission_allowed(request.actor, 'insert-row'),
+    "can_update": permission_allowed(request.actor, 'update-row'),
+    "can_delete": permission_allowed(request.actor, 'delete-row'),
+    }  | tojson
+}}</script>
+
 {% if permission_allowed(request.actor, 'insert-row') %}
-<div id="edit-row-modal" class="modal">
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <h2 class="modal-title"></h2>
-    <div class="modal-body"></div>
-  </div>
-</div>
-<button id="insert">Insert new row</button>
-<script type="module">
-  import {html} from "https://cdn.skypack.dev/pin/htl@v0.3.1-qo9977lsbNCN9zxLCGWT/mode=imports,min/optimized/htl.js";
+  <button id="datasette-write-ui-insert-button">Insert new row</button>
+{% endif %}
 
-  class Modal {
-    constructor(root) {
-      this.root = root;
-      this.body = this.root.querySelector('.modal-body');
-      this.title = this.root.querySelector('.modal-title');
-
-      this.hide = this.hide.bind(this);
-      this.show = this.show.bind(this);
-      this.setTitle = this.setTitle.bind(this);
-      this.setBody = this.setBody.bind(this);
-
-      // close modal when the close button is pressed
-      this.root.querySelector('.close').addEventListener("click", this.hide);
-
-      // close modal when ESCAPE is pressed
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") this.hide();
-      });
-    }
-    hide() {
-      this.root.style.display = "none";
-      return this;
-    }
-    show() {
-      this.root.style.display = "block";
-      return this;
-    }
-    setTitle(text) {
-      this.title.innerText = text;
-      return this;
-    }
-    setBody(element) {
-      this.body.innerHTML = '';
-      this.body.appendChild(element);
-      return this;
-    }
-  }
-
-  class RowIcon {
-    constructor(target) {
-      this.hide = this.hide.bind(this);
-      this.show = this.show.bind(this);
-      this.toggle = this.toggle.bind(this);
-      this.addButton = this.addButton.bind(this);
-
-      this.root = html`<span class="row-icon">
-          <button class="icon">&#9881;</button>
-          <div class="menu"></div>
-        </span>`;
-      target.appendChild(this.root);
-      this.icon = this.root.querySelector('.icon');
-      this.menu = this.root.querySelector('.menu');
-
-      // when icon is clicked, toggle the menu
-      this.icon.addEventListener("click", (event) => {
-        event.stopPropagation();
-        this.toggle()
-      });
-
-      // when clicked elsewhere, hide it
-      document.addEventListener("click", this.hide);
-
-      // if escape is pressed, hide
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-          this.hide()
-        }
-      });
-
-      // Prevent bubbling up to to the document and closing the menu
-      this.menu.addEventListener("click", (event) => {
-        event.stopPropagation();
-      });
-
-    }
-
-    hide() {
-      this.menu.style.display = "none";
-    }
-    show() {
-      this.menu.style.display = "block";
-    }
-    toggle() {
-      if(this.menu.style.display === "block") this.hide()
-      else this.show()
-    }
-    addButton(label, callback) {
-      this.menu.appendChild(html`<button onClick=${callback}>${label}`);
-      return this
-    }
-  }
-
-  function inputForField(field){
-    if(field.type === 'int' || field.type === 'float') {
-      return html`
-        <input
-          type=number
-          value=${field.value}
-          name=${field.key}
-          id=${field.key}
-          disabled=${!field.editable}
-          step=${field.type === 'int' ? 1 : .01}/>`
-    }
-    if(field.type === 'str') {
-      return html`
-        <textarea
-          name=${field.key}
-          id=${field.key}
-          disabled=${!field.editable}>${field.value}`
-    }
-    return html`<p>Unsupported type ${field.type} for ${field.key}</p>`
-  }
-
-  function apiEditRowDetails(db, table, primaryKeys) {
-    const params = new URLSearchParams({db, table, primaryKeys});
-    return fetch(`/-/edit-row-details?${params}`)
-      .then(response => response.json())
-  }
-  function apiInsertRowDetails(db, table) {
-    const params = new URLSearchParams({db, table});
-    return fetch(`/-/insert-row-details?${params}`)
-      .then(response => response.json())
-  }
-  function apiDelete(db, table, primaryKeys) {
-    return fetch(`/${db}/${table}/${primaryKeys}/-/delete`, {
-      method: "POST",
-      credentials: 'include',
-      headers: {'Content-Type': 'application/json'}
-    }).then(async response => {
-      const data = await response.json();
-      if(response.status < 200 || response.status > 299 || !data.ok) {
-        throw Error(data.errors)
-      }
-      return data;
-    }).catch(error => {
-      throw error;
-    });
-  }
-  function apiUpdate(db, table, primaryKeys, body) {
-    return fetch( `/${db}/${table}/${primaryKeys}/-/update`, {
-      method :"POST",
-      credentials: 'include',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(body)
-    }).then(async response => {
-      const data = await response.json();
-      if(response.status < 200 || response.status > 299 || !data.ok) {
-        throw Error(data.errors);
-      }
-      return data
-    }).catch(error => {
-      throw error;
-    });
-  }
-
-  //
-  function createEditHandler(db, table, primaryKeys) {
-    return function onEdit() {
-      apiEditRowDetails(db, table, primaryKeys).then(async data => {
-        console.log(data);
-
-        function onSubmit(event){
-          event.preventDefault();
-          const body = {
-            update: {},
-            "return": true
-          }
-          apiUpdate(db, table, primaryKeys, body)
-            .then(() => window.location.reload())
-        }
-        const form = html`
-          <form onSubmit=${onSubmit}>
-            <div>
-              <div style="display: grid; grid-template-columns: 200px auto;">
-                ${data.fields.map(field => html.fragment`
-                  <div>
-                      <label for=${field.key}>${field.key}</label> ${field.ok ? '🔑' : ''}
-                  </div>
-                  <div>
-                    ${inputForField(field)}
-                  </div>
-                  `)}
-              </div>
-            </div>
-            <input type="submit" value="Submit">
-          </form>`;
-
-        modal
-          .setBody(form)
-          .setTitle('Editing')
-          .show();
-      })
-    }
-  }
-
-  function createDeleteHandler(db, table, primaryKeys) {
-    return function onDelete() {
-      const result = window.confirm(`Are you sure you want to delete ${db}/${table}/${primaryKeys}?`);
-      if(result) {
-        apiDelete(db, table, primaryKeys)
-          .then(() => window.location.reload())
-      }
-    }
-  }
-
-  const modal = new Modal(document.getElementById("edit-row-modal"));
-  const primaryKeyRows = document.querySelectorAll('table.rows-and-columns td.type-pk');
-
-  for(const primaryKeyRow of primaryKeyRows) {
-    const href = primaryKeyRow.querySelector('a').getAttribute('href');
-    const [_, db, table, primaryKeys] = href.split('/');
-
-    const onEdit = createEditHandler(db, table, primaryKeys);
-    const onDelete = createDeleteHandler(db, table, primaryKeys);
-
-    new RowIcon(primaryKeyRow)
-      .addButton('Edit', onEdit)
-      .addButton('Delete', onDelete);
-  }
-
-  document.querySelector('#insert').addEventListener('click', async () => {
-    const [_, db, table] = window.location.pathname.split("/");
-    let data = await apiInsertRowDetails(db, table);
-    const body = html`
-      <div>
-        ${data.fields.map(field => html`
-          <div>
-            ${JSON.stringify(field)}
-          </div>`)}
-      </div>`;
-
-    modal
-      .setTitle("Insert new row")
-      .setBody(body)
-      .show();
-  })
-
+{%  if permission_allowed(request.actor, 'insert-row')
+      or permission_allowed(request.actor, 'update-row')
+      or permission_allowed(request.actor, 'delete-row')
+       %}
+<script id="datasette-write-ui" type="module" src="/-/static-plugins/datasette_write_ui/table.min.js"></script>
 
 </script>
 <style>
@@ -313,8 +81,8 @@
 .row-icon .menu {
   display: none;
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 1rem;
+  left: 1rem;
   z-index: 1;
   background-color: #fefefe;
   border: 1px solid #888;

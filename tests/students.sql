@@ -1,5 +1,5 @@
 create table students(
-  id int primary key,
+  id integer primary key autoincrement,
   name text not null,
   age int check (age >= 0),
   units_completed float,
