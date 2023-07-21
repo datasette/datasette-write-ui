@@ -1,82 +1,29 @@
+// @ts-ignore
 import { html } from "htl";
+import { insertRow, updateRow, deleteRow } from "./write-api";
+import {
+  EditRowDetailsField,
+  InsertRowDetailsField,
+  editRowDetails,
+  insertRowDetails,
+} from "./plugin-api";
 
-const permissions = JSON.parse(
-  document.querySelector("script#datasette-write-ui-permissions").textContent
-);
+const permissionsElement = document.querySelector(
+  "script#datasette-write-ui-permissions"
+) as HTMLScriptElement;
 
-function pluginApiEditRowDetails(db, table, primaryKeys) {
-  return fetch(
-    `/-/datasette-write-ui/edit-row-details?${new URLSearchParams({
-      db,
-      table,
-      primaryKeys,
-    })}`
-  ).then((response) => response.json());
-}
-function pluginApiInsertRowDetails(db, table) {
-  return fetch(
-    `/-/datasette-write-ui/insert-row-details?${new URLSearchParams({
-      db,
-      table,
-    })}`
-  ).then((response) => response.json());
-}
-function datasetteApiDelete(db, table, primaryKeys) {
-  return fetch(`/${db}/${table}/${primaryKeys}/-/delete`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-  })
-    .then(async (response) => {
-      const data = await response.json();
-      if (response.status < 200 || response.status > 299 || !data.ok) {
-        throw Error(data.errors);
-      }
-      return data;
-    })
-    .catch((error) => {
-      throw error;
-    });
-}
-function datasetteApiUpdate(db, table, primaryKeys, body) {
-  return fetch(`/${db}/${table}/${primaryKeys}/-/update`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  })
-    .then(async (response) => {
-      const data = await response.json();
-      if (response.status < 200 || response.status > 299 || !data.ok) {
-        throw Error(data.errors);
-      }
-      return data;
-    })
-    .catch((error) => {
-      throw error;
-    });
-}
-function datasetteApiInsertRow(db, table, row) {
-  return fetch(`/${db}/${table}/-/insert`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ row }),
-  })
-    .then(async (response) => {
-      const data = await response.json();
-      if (response.status < 200 || response.status > 299 || !data.ok) {
-        throw Error(data.errors);
-      }
-      return data;
-    })
-    .catch((error) => {
-      throw error;
-    });
-}
+const permissions = JSON.parse(permissionsElement.textContent as string) as {
+  can_insert: boolean;
+  can_delete: boolean;
+  can_update: boolean;
+};
 
 class Modal {
-  constructor(root) {
+  root: HTMLElement;
+  body: HTMLElement;
+  title: HTMLElement;
+
+  constructor() {
     this.root = html`<div class="modal">
       <div class="modal-content">
         <span class="close">&times;</span>
@@ -85,8 +32,8 @@ class Modal {
       </div>
     </div>`;
     document.body.appendChild(this.root);
-    this.body = this.root.querySelector(".modal-body");
-    this.title = this.root.querySelector(".modal-title");
+    this.body = this.root.querySelector(".modal-body") as HTMLElement;
+    this.title = this.root.querySelector(".modal-title") as HTMLElement;
 
     this.hide = this.hide.bind(this);
     this.show = this.show.bind(this);
@@ -94,7 +41,10 @@ class Modal {
     this.setBody = this.setBody.bind(this);
 
     // close modal when the close button is pressed
-    this.root.querySelector(".close").addEventListener("click", this.hide);
+    (this.root.querySelector(".close") as HTMLElement).addEventListener(
+      "click",
+      this.hide
+    );
 
     // close modal when ESCAPE is pressed
     document.addEventListener("keydown", (e) => {
@@ -109,11 +59,11 @@ class Modal {
     this.root.style.display = "block";
     return this;
   }
-  setTitle(text) {
+  setTitle(text: string) {
     this.title.innerText = text;
     return this;
   }
-  setBody(element) {
+  setBody(element: HTMLElement) {
     this.body.innerHTML = "";
     this.body.appendChild(element);
     return this;
@@ -121,7 +71,11 @@ class Modal {
 }
 
 class RowIcon {
-  constructor(target) {
+  root: HTMLElement;
+  icon: HTMLElement;
+  menu: HTMLElement;
+
+  constructor(target: Element) {
     this.hide = this.hide.bind(this);
     this.show = this.show.bind(this);
     this.toggle = this.toggle.bind(this);
@@ -132,8 +86,8 @@ class RowIcon {
       <div class="menu"></div>
     </span>`;
     target.appendChild(this.root);
-    this.icon = this.root.querySelector(".icon");
-    this.menu = this.root.querySelector(".menu");
+    this.icon = this.root.querySelector(".icon") as HTMLElement;
+    this.menu = this.root.querySelector(".menu") as HTMLElement;
 
     // when icon is clicked, toggle the menu
     this.icon.addEventListener("click", (event) => {
@@ -167,13 +121,13 @@ class RowIcon {
     if (this.menu.style.display === "block") this.hide();
     else this.show();
   }
-  addButton(label, callback) {
+  addButton(label: string, callback: () => void) {
     this.menu.appendChild(html`<button onClick=${callback}>${label}</button>`);
     return this;
   }
 }
 
-function inputForField(field) {
+function inputForField(field: EditRowDetailsField) {
   if (field.type === "int" || field.type === "float" || field.type === "INT") {
     return html`<input
       type="number"
@@ -193,7 +147,7 @@ function inputForField(field) {
   return html`<p>Unsupported type ${field.type} for ${field.key}</p>`;
 }
 
-function inputForEmptyField(field) {
+function inputForEmptyField(field: InsertRowDetailsField) {
   if (
     field.affinity === "int" ||
     field.affinity === "real" ||
@@ -209,20 +163,20 @@ function inputForEmptyField(field) {
   if (field.affinity == "text") {
     return html`<textarea
         name=${field.name}
-        id=${field.name}>${field.value}`;
+        id=${field.name}>`;
   }
-  return html`<p>Unsupported type ${field.type} for ${field.name}</p>`;
+  return html`<p>Unsupported type ${field.affinity} for ${field.name}</p>`;
 }
 
 //
-function createEditHandler(db, table, primaryKeys) {
+function createEditHandler(db: string, table: string, primaryKeys: string) {
   return async function onEdit() {
-    const data = await pluginApiEditRowDetails(db, table, primaryKeys);
+    const data = await editRowDetails(db, table, primaryKeys);
     const inputFields = new Map();
 
-    function onSubmit(event) {
+    function onSubmit(event: FormDataEvent) {
       event.preventDefault();
-      const update = {};
+      const update: { [key: string]: any } = {};
       for (const [key, input] of inputFields.entries()) {
         if (input.disabled) continue;
         const value =
@@ -234,7 +188,7 @@ function createEditHandler(db, table, primaryKeys) {
         update,
         return: true,
       };
-      datasetteApiUpdate(db, table, primaryKeys, body).then(() =>
+      updateRow(db, table, primaryKeys, body).then(() =>
         window.location.reload()
       );
     }
@@ -262,24 +216,22 @@ function createEditHandler(db, table, primaryKeys) {
       .show();
   };
 }
-function createInsertHandler(db, table) {
+function createInsertHandler(db: string, table: string) {
   return async function onInsert() {
-    const { fields } = await pluginApiInsertRowDetails(db, table);
-    const inputFields = new Map();
+    const { fields } = await insertRowDetails(db, table);
+    const inputFields = new Map<string, any>();
 
-    function onSubmit(event) {
+    function onSubmit(event: FormDataEvent) {
       event.preventDefault();
 
-      const row = {};
+      const row: { [key: string]: any } = {};
       for (const [key, input] of inputFields.entries()) {
         if (input.disabled) continue;
         const value =
           input.type === "number" ? input.valueAsNumber : input.value;
         row[key] = value;
       }
-      datasetteApiInsertRow(db, table, row).then(() =>
-        window.location.reload()
-      );
+      insertRow(db, table, row).then(() => window.location.reload());
     }
     const form = html` <form onSubmit=${onSubmit}>
       <div>
@@ -301,27 +253,27 @@ function createInsertHandler(db, table) {
   };
 }
 
-function createDeleteHandler(db, table, primaryKeys) {
+function createDeleteHandler(db: string, table: string, primaryKeys: string) {
   return function onDelete() {
     const result = window.confirm(
       `Are you sure you want to delete ${db}/${table}/${primaryKeys}?`
     );
     if (result) {
-      datasetteApiDelete(db, table, primaryKeys).then(() =>
-        window.location.reload()
-      );
+      deleteRow(db, table, primaryKeys).then(() => window.location.reload());
     }
   };
 }
 
 const modal = new Modal();
-const primaryKeyRows = document.querySelectorAll(
-  "table.rows-and-columns td.type-pk"
-);
 
 if (permissions.can_update || permissions.can_delete) {
+  const primaryKeyRows = Array.from(
+    document.querySelectorAll("table.rows-and-columns td.type-pk")
+  );
   for (const primaryKeyRow of primaryKeyRows) {
-    const href = primaryKeyRow.querySelector("a").getAttribute("href");
+    const href = (
+      primaryKeyRow.querySelector("a") as HTMLAnchorElement
+    ).getAttribute("href") as string;
     const [_, db, table, primaryKeys] = href.split("/");
     const rowIcon = new RowIcon(primaryKeyRow);
 
@@ -337,10 +289,11 @@ if (permissions.can_update || permissions.can_delete) {
 }
 
 if (permissions.can_insert) {
-  document
-    .querySelector("#datasette-write-ui-insert-button")
-    .addEventListener("click", async () => {
-      const [_, db, table] = window.location.pathname.split("/");
-      createInsertHandler(db, table)();
-    });
+  const insertButton = document.querySelector(
+    "#datasette-write-ui-insert-button"
+  ) as HTMLButtonElement;
+  insertButton.addEventListener("click", async () => {
+    const [_, db, table] = window.location.pathname.split("/");
+    createInsertHandler(db, table)();
+  });
 }
