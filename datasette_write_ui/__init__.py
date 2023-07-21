@@ -1,6 +1,21 @@
 from datasette import hookimpl, Response, Forbidden
 from typing import Any, TypedDict
 
+@hookimpl
+def register_routes():
+    return [
+        (r"^/-/datasette-write-ui/edit-row-details$", edit_row_details),
+        (r"^/-/datasette-write-ui/insert-row-details$", insert_row_details),
+    ]
+
+@hookimpl
+def extra_template_vars(datasette, database, table):
+    async def permission_allowed(actor, permission):
+        return await datasette.permission_allowed(actor, permission, (database, table))
+
+    return {"permission_allowed": permission_allowed}
+
+
 
 def affinity_from_type(type):
     """
@@ -22,18 +37,6 @@ def affinity_from_type(type):
         return "real"
     return "numeric"
 
-
-@hookimpl
-def extra_template_vars(datasette, database, table):
-    """
-    Adds a new permission_allowed() template var to see if an actor is allowed
-    to perform anaction that requires a permissions.
-    """
-
-    async def permission_allowed(actor, permission):
-        return await datasette.permission_allowed(actor, permission, (database, table))
-
-    return {"permission_allowed": permission_allowed}
 
 
 class EditRowDetailsField(TypedDict):
@@ -137,11 +140,3 @@ async def insert_row_details(scope, receive, datasette, request):
             "fields": insertable_columns,
         }
     )
-
-
-@hookimpl
-def register_routes():
-    return [
-        (r"^/-/datasette-write-ui/edit-row-details$", edit_row_details),
-        (r"^/-/datasette-write-ui/insert-row-details$", insert_row_details),
-    ]
