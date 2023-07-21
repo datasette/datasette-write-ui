@@ -70,7 +70,7 @@ async def test_permissions(students_db_path):
     assert permissions["can_delete"] == True
     assert permissions["can_insert"] == True
     assert permissions["can_update"] == True
-    assert '<script id="datasette-write-ui" type="module">' in response.text
+    assert '<script id="datasette-write-ui" type="module" src="/-/static-plugins/datasette_write_ui/table.min.js"></script>' in response.text
 
     response = await datasette.client.get(
         "/students/students",
@@ -80,14 +80,14 @@ async def test_permissions(students_db_path):
     assert permissions["can_delete"] == False
     assert permissions["can_insert"] == True
     assert permissions["can_update"] == False
-    assert '<script id="datasette-write-ui" type="module">' in response.text
+    assert '<script id="datasette-write-ui" type="module" src="/-/static-plugins/datasette_write_ui/table.min.js"></script>' in response.text
 
 
 @pytest.mark.asyncio
 async def test_insert_row_details_route(students_db_path):
     datasette = Datasette([students_db_path])
     response = await datasette.client.get(
-        "/-/insert-row-details?db=students&table=students",
+        "/-/datasette-write-ui/insert-row-details?db=students&table=students",
         cookies={"ds_actor": datasette.sign(actor_root, "actor")},
     )
     assert response.status_code == 200
@@ -104,7 +104,7 @@ async def test_update_row_details_route(students_db_path):
     datasette = Datasette([students_db_path])
 
     response = await datasette.client.get(
-        "/-/edit-row-details?db=students&table=students&primaryKeys=1",
+        "/-/datasette-write-ui/edit-row-details?db=students&table=students&primaryKeys=1",
         cookies={"ds_actor": datasette.sign(actor_root, "actor")},
     )
     assert response.status_code == 200
@@ -122,6 +122,6 @@ async def test_update_row_details_route(students_db_path):
     }
 
     response = await datasette.client.get(
-        "/-/insert-row-details?db=students&table=students",
+        "/-/datasette-write-ui/insert-row-details?db=students&table=students",
     )
     assert response.status_code == 403
