@@ -27,13 +27,15 @@ setup(
     license="Apache License, Version 2.0",
     classifiers=[
         "Framework :: Datasette",
-        "License :: OSI Approved :: Apache Software License",
+        "License :: OSI Approved :: Apache Software License"
     ],
     version=VERSION,
     packages=["datasette_write_ui"],
     entry_points={"datasette": ["datasette_write_ui = datasette_write_ui"]},
-    install_requires=["datasette>=1.0a1", "sqlite-utils"],
+    install_requires=["datasette"],
     extras_require={"test": ["pytest", "pytest-asyncio"]},
-    package_data={"datasette_write_ui": ["static/*", "templates/*"]},
+    package_data={
+        "datasette_write_ui": ["static/*", "templates/*"]
+    },
     python_requires=">=3.7",
 )

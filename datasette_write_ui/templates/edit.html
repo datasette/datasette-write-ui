@@ -1,0 +1,88 @@
+
+
+{% extends "base.html" %}
+
+{% block title %} yo yo yo  {% endblock %}
+
+{% block extra_head %}
+
+{% endblock %}
+
+{% block crumbs %}
+{% endblock %}
+
+{% block content %}
+yo {{ name }}
+
+<div>
+  <div>db<b>{{db}}</b></div>
+  <div>table<b>{{table}}</b></div>
+  <div>pks<b>{{pks}}</b></div>
+  <div>fields<b>{{fields}}</b></div>
+
+  <form action="/-/edit" method="post" enctype="multipart/form-data" id="edit">
+    <input type="hidden" name="csrftoken" value="{{ csrftoken() }}">
+  {% for field in fields %}
+    <div>
+      {%if field['pk'] %}🔑{% endif %}
+      <label for="{{ field['key'] }}">{{ field['key'] }}</label>
+      {% if field['type'] == 'int' %}
+        <input type="number" value="{{ field['value'] }}" name={{field['key']}} id={{field['key']}} {%if not field['editable'] %}disabled{% endif %}/>
+      {% elif field['type'] == 'float' %}
+        <input type="number" value="{{ field['value'] }}" name={{field['key']}} id={{field['key']}} {%if not field['editable'] %}disabled{% endif %}/>
+      {% elif field['type'] == 'str' %}
+        <input type="text" value="{{ field['value'] }}"  name={{field['key']}} id={{field['key']}} {%if not field['editable'] %}disabled{% endif %}/>
+      {% else %}
+        <p>unsupported type {{ field['type'] }} for {{ field['key'] }}</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+  <input type="submit" value="Submit">
+  </form>
+</div>
+
+<script>
+  const db = {{db | tojson}};
+  const table = {{table | tojson}};
+  const fields = {{fields|tojson}};
+  console.log(db, fields);
+
+  const form = document.getElementById('edit');
+
+  for(const field of fields) {
+    const input = form.querySelector(`#${field.key}`);
+    if (!input) {
+      console.warn("no input for", field.key)
+      continue;
+    }
+    switch (input.getAttribute('type')) {
+      case 'text':
+        console.log(input.value)
+        break;
+      case 'number':
+        console.log(input.valueAsNumber)
+        break;
+    }
+  }
+  /**
+   *  @param {FormEvent} event
+   */
+  function onSubmit(event){
+    event.preventDefault();
+    fetch('', {
+      method: "POST",
+      headers: new Headers({
+        "X-CSRFToken": "{{ csrftoken()}}",
+      }),
+      body: JSON.stringify({
+        db,
+        table,
+        update: {
+
+        }
+      })
+    })
+  }
+  form.addEventListener('submit', onSubmit);
+</script>
+{% endblock %}
