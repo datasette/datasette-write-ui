@@ -126,7 +126,7 @@ async def insert_row_details(scope, receive, datasette, request):
 
     insertable_columns = []
     for row in await db.execute(
-        "select name, [type] from pragma_table_xinfo(?) where hidden == 0", [table_name]
+        "select name, [type] from pragma_table_xinfo(?) where pk == 0 and hidden == 0", [table_name]
     ):
         name, type = row
         insertable_columns.append(
