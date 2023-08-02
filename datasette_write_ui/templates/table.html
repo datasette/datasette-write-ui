@@ -1,0 +1,30 @@
+{% extends "default:table.html" %}
+
+{% block content %}
+{{ super() }}
+
+<script id="datasette-write-ui-permissions" type="application/json">{{
+    {
+    "can_insert": permission_allowed(request.actor, 'insert-row'),
+    "can_update": permission_allowed(request.actor, 'update-row'),
+    "can_delete": permission_allowed(request.actor, 'delete-row'),
+    }  | tojson
+}}</script>
+
+
+
+{%  if permission_allowed(request.actor, 'insert-row')
+      or permission_allowed(request.actor, 'update-row')
+      or permission_allowed(request.actor, 'delete-row')
+       %}
+
+  {% if permission_allowed(request.actor, 'insert-row') %}
+    <button id="datasette-write-ui-insert-button">Insert new row</button>
+  {% endif %}
+
+  <script id="datasette-write-ui" type="module" src="/-/static-plugins/datasette_write_ui/table.min.js"></script>
+  <link href="/-/static-plugins/datasette_write_ui/table.css" rel="stylesheet" />
+
+  {% endif %}
+
+{% endblock %}
