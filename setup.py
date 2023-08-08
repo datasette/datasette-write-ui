@@ -35,5 +35,5 @@ setup(
     install_requires=["datasette>=1.0a1", "sqlite-utils"],
     extras_require={"test": ["pytest", "pytest-asyncio"]},
     package_data={"datasette_write_ui": ["static/*", "templates/*"]},
-    python_requires=">=3.7",
+    python_requires=">=3.8",
 )
