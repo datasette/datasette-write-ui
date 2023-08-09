@@ -1,6 +1,7 @@
 from datasette import hookimpl, Response, Forbidden
 from datasette.utils import escape_sqlite
 from typing import Any, TypedDict
+from datasette.utils import tilde_decode
 
 
 @hookimpl
@@ -76,14 +77,29 @@ async def edit_row_details(scope, receive, datasette, request):
     column_list = ", ".join(
         list(map(lambda column: escape_sqlite(column.get("name")), columns))
     )
+    pk_columns = [
+        row[0]
+        for row in await db.execute(
+            "select name from pragma_table_xinfo(?) where pk != 0 order by pk",
+            [table_name],
+        )
+    ]
 
     # TODO only works in single primary key tables
+    id_column = "rowid" if len(pk_columns) == 0 else pk_columns[0]
     results = await db.execute(
-        f"select {column_list} from {table_name} where rowid = ?", [pks]
+        f"select {column_list} from {table_name} where {escape_sqlite(id_column)} = ?",
+        [tilde_decode(pks)],
     )
 
     fields = []
     row = results.first()
+
+    if row is None:
+        return Response.json(
+            {"ok": False, "message": "No matching row found."}, status=400
+        )
+
     for column in columns:
         value = row[column["name"]]
         fields.append(

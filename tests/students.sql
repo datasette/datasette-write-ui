@@ -12,23 +12,26 @@ insert into students values (2, 'brian', 20, 90.0, 0);
 insert into students values (3, 'craig', 30, 124.5, 0);
 
 create table courses(
-  id int primary key,
-  name text
+  name text primary key
 );
 
-insert into courses values(1, 'MATH 101');
-insert into courses values(2, 'MATH 102');
+insert into courses values('MATH 101');
+insert into courses values('MATH 102');
 
 create table enrollees(
   --! primarily an example of a table with composite primary keys
 
-  course_id int,
+  course_id text,
   student_id int,
   dropped_at date,
   primary key(course_id, student_id)
 );
 
-insert into enrollees values (1, 1, null);
-insert into enrollees values (1, 2, null);
-insert into enrollees values (1, 3, null);
-insert into enrollees values (2, 1, '2023-01-15');
+insert into enrollees values ('MATH 101', 1, null);
+insert into enrollees values ('MATH 101', 2, null);
+insert into enrollees values ('MATH 101', 3, null);
+insert into enrollees values ('MATH 102', 1, '2023-01-15');
+
+create table t(a int);
+
+insert into t(a) values (1);

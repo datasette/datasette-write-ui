@@ -18,11 +18,19 @@ def get_permission_from_table_html(html):
 @pytest.fixture
 def students_db_path(tmpdir):
     path = str(tmpdir / "students.db")
-    sqlite_utils.Database(path)["students"].insert_all(
+    db = sqlite_utils.Database(path)
+    db["students"].insert_all(
         [
             {"name": "alex", "age": 10},
             {"name": "brian", "age": 20},
             {"name": "craig", "age": 30, "[weird (column)]": 1},
+        ]
+    )
+    db.execute("create table courses(name text primary key) without rowid")
+    db["courses"].insert_all(
+        [
+            {"name": "MATH 101"},
+            {"name": "MATH 102"},
         ]
     )
     return path
@@ -111,6 +119,11 @@ async def test_update_row_details_route(students_db_path):
     datasette = Datasette([students_db_path])
 
     response = await datasette.client.get(
+        "/-/datasette-write-ui/insert-row-details?db=students&table=students",
+    )
+    assert response.status_code == 403
+
+    response = await datasette.client.get(
         "/-/datasette-write-ui/edit-row-details?db=students&table=students&primaryKeys=1",
         cookies={"ds_actor": datasette.sign(actor_root, "actor")},
     )
@@ -136,6 +149,25 @@ async def test_update_row_details_route(students_db_path):
     }
 
     response = await datasette.client.get(
-        "/-/datasette-write-ui/insert-row-details?db=students&table=students",
+        "/-/datasette-write-ui/edit-row-details?db=students&table=courses&primaryKeys=MATH+101",
+        cookies={"ds_actor": datasette.sign(actor_root, "actor")},
     )
-    assert response.status_code == 403
+    assert response.status_code == 200
+    assert response.json() == {
+        "fields": [
+            {
+                "key": "name",
+                "value": "MATH 101",
+                "type": "str",
+                "pk": True,
+                "editable": False,
+            },
+        ]
+    }
+
+    response = await datasette.client.get(
+        "/-/datasette-write-ui/edit-row-details?db=students&table=courses&primaryKeys=not_exist",
+        cookies={"ds_actor": datasette.sign(actor_root, "actor")},
+    )
+    assert response.status_code == 400
+    assert response.json() == {"ok": False, "message": "No matching row found."}
