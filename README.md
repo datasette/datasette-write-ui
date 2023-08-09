@@ -34,11 +34,3 @@ Now install the dependencies and test dependencies:
 To run the tests:
 
     pytest
-
-## TODO
-
-- [ ] check for permissions
-- [ ] insert
-- [ ] delete
-- [ ] plugin config for input (text vs textarea, )
-- [ ] blob file input
