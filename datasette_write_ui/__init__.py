@@ -1,5 +1,7 @@
 from datasette import hookimpl, Response, Forbidden
+from datasette.utils import escape_sqlite
 from typing import Any, TypedDict
+
 
 @hookimpl
 def register_routes():
@@ -8,13 +10,13 @@ def register_routes():
         (r"^/-/datasette-write-ui/insert-row-details$", insert_row_details),
     ]
 
+
 @hookimpl
 def extra_template_vars(datasette, database, table):
     async def permission_allowed(actor, permission):
         return await datasette.permission_allowed(actor, permission, (database, table))
 
     return {"permission_allowed": permission_allowed}
-
 
 
 def affinity_from_type(type):
@@ -36,7 +38,6 @@ def affinity_from_type(type):
     if any(x in type for x in ["real", "floa", "doub"]):
         return "real"
     return "numeric"
-
 
 
 class EditRowDetailsField(TypedDict):
@@ -72,7 +73,9 @@ async def edit_row_details(scope, receive, datasette, request):
             {"pk": pk != 0, "name": name, "editable": pk == 0 and hidden not in [2, 3]}
         )  ##
 
-    column_list = ", ".join(list(map(lambda column: column.get("name"), columns)))
+    column_list = ", ".join(
+        list(map(lambda column: escape_sqlite(column.get("name")), columns))
+    )
 
     # TODO only works in single primary key tables
     results = await db.execute(
@@ -126,7 +129,8 @@ async def insert_row_details(scope, receive, datasette, request):
 
     insertable_columns = []
     for row in await db.execute(
-        "select name, [type] from pragma_table_xinfo(?) where pk == 0 and hidden == 0", [table_name]
+        "select name, [type] from pragma_table_xinfo(?) where pk == 0 and hidden == 0",
+        [table_name],
     ):
         name, type = row
         insertable_columns.append(

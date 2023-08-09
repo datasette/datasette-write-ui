@@ -22,7 +22,7 @@ def students_db_path(tmpdir):
         [
             {"name": "alex", "age": 10},
             {"name": "brian", "age": 20},
-            {"name": "craig", "age": 30},
+            {"name": "craig", "age": 30, "[weird (column)]": 1},
         ]
     )
     return path
@@ -70,7 +70,10 @@ async def test_permissions(students_db_path):
     assert permissions["can_delete"] == True
     assert permissions["can_insert"] == True
     assert permissions["can_update"] == True
-    assert '<script id="datasette-write-ui" type="module" src="/-/static-plugins/datasette_write_ui/table.min.js"></script>' in response.text
+    assert (
+        '<script id="datasette-write-ui" type="module" src="/-/static-plugins/datasette_write_ui/table.min.js"></script>'
+        in response.text
+    )
 
     response = await datasette.client.get(
         "/students/students",
@@ -80,7 +83,10 @@ async def test_permissions(students_db_path):
     assert permissions["can_delete"] == False
     assert permissions["can_insert"] == True
     assert permissions["can_update"] == False
-    assert '<script id="datasette-write-ui" type="module" src="/-/static-plugins/datasette_write_ui/table.min.js"></script>' in response.text
+    assert (
+        '<script id="datasette-write-ui" type="module" src="/-/static-plugins/datasette_write_ui/table.min.js"></script>'
+        in response.text
+    )
 
 
 @pytest.mark.asyncio
@@ -95,6 +101,7 @@ async def test_insert_row_details_route(students_db_path):
         "fields": [
             {"name": "name", "affinity": "text"},
             {"name": "age", "affinity": "int"},
+            {"name": "_weird (column)_", "affinity": "int"},
         ]
     }
 
@@ -118,7 +125,14 @@ async def test_update_row_details_route(students_db_path):
                 "editable": True,
             },
             {"key": "age", "value": 10, "type": "int", "pk": False, "editable": True},
-        ],
+            {
+                "key": "_weird (column)_",
+                "value": None,
+                "type": "NoneType",
+                "pk": False,
+                "editable": True,
+            },
+        ]
     }
 
     response = await datasette.client.get(

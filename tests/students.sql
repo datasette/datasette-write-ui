@@ -3,12 +3,13 @@ create table students(
   name text not null,
   age int check (age >= 0),
   units_completed float,
+  [weird (column)] int,
   decade as (floor(age / 10))
 );
 
-insert into students values (1, 'alex', 10, 4.5);
-insert into students values (2, 'brian', 20, 90.0);
-insert into students values (3, 'craig', 30, 124.5);
+insert into students values (1, 'alex', 10, 4.5, 0);
+insert into students values (2, 'brian', 20, 90.0, 0);
+insert into students values (3, 'craig', 30, 124.5, 0);
 
 create table courses(
   id int primary key,
