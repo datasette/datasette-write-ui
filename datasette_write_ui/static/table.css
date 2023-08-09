@@ -39,6 +39,7 @@
   height: 1rem;
   font-size: 1rem;
   display: inline-block;
+  padding-right: 0.25rem;
 }
 
 .row-icon .icon {

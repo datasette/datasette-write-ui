@@ -85,7 +85,7 @@ class RowIcon {
       <button class="icon">&#9881;</button>
       <div class="menu"></div>
     </span>`;
-    target.appendChild(this.root);
+    target.insertBefore(this.root, target.querySelector("a"));
     this.icon = this.root.querySelector(".icon") as HTMLElement;
     this.menu = this.root.querySelector(".menu") as HTMLElement;
 
