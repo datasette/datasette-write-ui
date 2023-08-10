@@ -59,9 +59,20 @@ async def edit_row_details(scope, receive, datasette, request):
     pks = request.args.get("primaryKeys")
 
     if not await datasette.permission_allowed(
-        request.actor, "edit-row", (db_name, table_name)
+        request.actor, "update-row", (db_name, table_name),
+        default=False
     ):
-        raise Forbidden("edit-row permissions required")
+        raise Forbidden("update-row permissions required")
+
+    if db_name is None:
+        return Response.json({"ok": False, "message": "db parameter is required"}, status=400)
+
+    if table_name is None:
+        return Response.json({"ok": False, "message": "table parameter is required"}, status=400)
+
+    if pks is None:
+        return Response.json({"ok": False, "message": "primaryKeys parameter is required"}, status=400)
+
 
     db = datasette.get_database(db_name)
 

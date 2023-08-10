@@ -100,6 +100,12 @@ async def test_permissions(students_db_path):
 @pytest.mark.asyncio
 async def test_insert_row_details_route(students_db_path):
     datasette = Datasette([students_db_path])
+
+    response = await datasette.client.get(
+        "/-/datasette-write-ui/insert-row-details?db=students&table=students",
+    )
+    assert response.status_code == 403
+
     response = await datasette.client.get(
         "/-/datasette-write-ui/insert-row-details?db=students&table=students",
         cookies={"ds_actor": datasette.sign(actor_root, "actor")},
@@ -119,7 +125,7 @@ async def test_update_row_details_route(students_db_path):
     datasette = Datasette([students_db_path])
 
     response = await datasette.client.get(
-        "/-/datasette-write-ui/insert-row-details?db=students&table=students",
+        "/-/datasette-write-ui/edit-row-details?db=students&table=students",
     )
     assert response.status_code == 403
 
@@ -171,3 +177,24 @@ async def test_update_row_details_route(students_db_path):
     )
     assert response.status_code == 400
     assert response.json() == {"ok": False, "message": "No matching row found."}
+
+    response = await datasette.client.get(
+        "/-/datasette-write-ui/edit-row-details?db=students&table=courses",
+        cookies={"ds_actor": datasette.sign(actor_root, "actor")},
+    )
+    assert response.status_code == 400
+    assert response.json() == {"ok": False, "message": "primaryKeys parameter is required"}
+
+    response = await datasette.client.get(
+        "/-/datasette-write-ui/edit-row-details?db=students&primaryKeys=1",
+        cookies={"ds_actor": datasette.sign(actor_root, "actor")},
+    )
+    assert response.status_code == 400
+    assert response.json() == {"ok": False, "message": "table parameter is required"}
+
+    response = await datasette.client.get(
+        "/-/datasette-write-ui/edit-row-details?table=courses&primaryKeys=1",
+        cookies={"ds_actor": datasette.sign(actor_root, "actor")},
+    )
+    assert response.status_code == 400
+    assert response.json() == {"ok": False, "message": "db parameter is required"}
