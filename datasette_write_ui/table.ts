@@ -193,7 +193,7 @@ function createEditHandler(db: string, table: string, primaryKeys: string) {
     }
     const form = html` <form onSubmit=${onSubmit}>
       <div>
-        <div style="display: grid; grid-template-columns: 200px auto;">
+        <div class="form-fields-container">
           ${data.fields.map((field) => {
             const input = inputForField(field);
             inputFields.set(field.key, input);
@@ -234,7 +234,7 @@ function createInsertHandler(db: string, table: string) {
     }
     const form = html` <form onSubmit=${onSubmit}>
       <div>
-        <div style="display: grid; grid-template-columns: 200px auto;">
+        <div class="form-fields-container">
           ${fields.map((field) => {
             const input = inputForEmptyField(field);
             inputFields.set(field.name, input);
