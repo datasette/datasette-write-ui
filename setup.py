@@ -18,11 +18,11 @@ setup(
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
     author="Alex Garcia",
-    url="https://github.com/asg017/datasette-write-ui",
+    url="https://github.com/datasette/datasette-write-ui",
     project_urls={
-        "Issues": "https://github.com/asg017/datasette-write-ui/issues",
-        "CI": "https://github.com/asg017/datasette-write-ui/actions",
-        "Changelog": "https://github.com/asg017/datasette-write-ui/releases",
+        "Issues": "https://github.com/datasette/datasette-write-ui/issues",
+        "CI": "https://github.com/datasette/datasette-write-ui/actions",
+        "Changelog": "https://github.com/datasette/datasette-write-ui/releases",
     },
     license="Apache License, Version 2.0",
     classifiers=[

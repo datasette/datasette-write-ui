@@ -1,9 +1,9 @@
 # datasette-write-ui
 
 [![PyPI](https://img.shields.io/pypi/v/datasette-write-ui.svg)](https://pypi.org/project/datasette-write-ui/)
-[![Changelog](https://img.shields.io/github/v/release/datasette-io/datasette-write-ui?include_prereleases&label=changelog)](https://github.com/datasette-io/datasette-write-ui/releases)
-[![Tests](https://github.com/datasette-io/datasette-write-ui/workflows/Test/badge.svg)](https://github.com/datasette-io/datasette-write-ui/actions?query=workflow%3ATest)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/datasette-io/datasette-write-ui/blob/main/LICENSE)
+[![Changelog](https://img.shields.io/github/v/release/datasette/datasette-write-ui?include_prereleases&label=changelog)](https://github.com/datasette/datasette-write-ui/releases)
+[![Tests](https://github.com/datasette/datasette-write-ui/workflows/Test/badge.svg)](https://github.com/datasette/datasette-write-ui/actions?query=workflow%3ATest)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/datasette/datasette-write-ui/blob/main/LICENSE)
 
 A Datasette plugin that adds UI elements to edit, insert, or delete rows in SQLite tables.
 
