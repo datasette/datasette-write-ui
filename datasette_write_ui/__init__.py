@@ -19,6 +19,11 @@ def extra_template_vars(datasette, database, table):
 
     return {"permission_allowed": permission_allowed}
 
+@hookimpl
+def extra_body_script(template, database, table, columns, view_name, request, datasette):
+    baseUrl = datasette.urls.instance()[:-1]
+    return f"function baseUrl() {{ return \"{baseUrl}\" }}"
+
 
 def affinity_from_type(type):
     """

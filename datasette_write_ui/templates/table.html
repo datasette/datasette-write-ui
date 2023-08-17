@@ -22,8 +22,8 @@
     <button id="datasette-write-ui-insert-button">Insert new row</button>
   {% endif %}
 
-  <script id="datasette-write-ui" type="module" src="/-/static-plugins/datasette_write_ui/table.min.js"></script>
-  <link href="/-/static-plugins/datasette_write_ui/table.css" rel="stylesheet" />
+  <script id="datasette-write-ui" type="module" src="{{ urls.static_plugins("datasette_write_ui", "table.min.js") }}"></script>
+  <link href="{{ urls.static_plugins("datasette_write_ui", "table.css") }}" rel="stylesheet" />
 
   {% endif %}
 
