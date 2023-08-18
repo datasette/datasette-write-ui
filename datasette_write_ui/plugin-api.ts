@@ -1,3 +1,5 @@
+import { BASE_URL } from "./config";
+
 export interface EditRowDetailsField {
   key: string;
   value: any;
@@ -14,7 +16,7 @@ export async function editRowDetails(
   primaryKeys: string
 ): Promise<EditRowDetailsResponse> {
   return fetch(
-    `${baseUrl()}/-/datasette-write-ui/edit-row-details?${new URLSearchParams({
+    `${BASE_URL}/-/datasette-write-ui/edit-row-details?${new URLSearchParams({
       db,
       table,
       primaryKeys,
@@ -34,7 +36,7 @@ export async function insertRowDetails(
   table: string
 ): Promise<InsertRowDetailsResponse> {
   return fetch(
-    `${baseUrl()}/-/datasette-write-ui/insert-row-details?${new URLSearchParams({
+    `${BASE_URL}/-/datasette-write-ui/insert-row-details?${new URLSearchParams({
       db,
       table,
     })}`

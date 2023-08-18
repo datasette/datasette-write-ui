@@ -17,12 +17,10 @@ def extra_template_vars(datasette, database, table):
     async def permission_allowed(actor, permission):
         return await datasette.permission_allowed(actor, permission, (database, table))
 
-    return {"permission_allowed": permission_allowed}
-
-@hookimpl
-def extra_body_script(template, database, table, columns, view_name, request, datasette):
-    baseUrl = datasette.urls.instance()[:-1]
-    return f"function baseUrl() {{ return \"{baseUrl}\" }}"
+    return {
+        "permission_allowed": permission_allowed,
+        "base_url": datasette.urls.instance()[:-1],
+    }
 
 
 def affinity_from_type(type):
@@ -64,20 +62,24 @@ async def edit_row_details(scope, receive, datasette, request):
     pks = request.args.get("primaryKeys")
 
     if not await datasette.permission_allowed(
-        request.actor, "update-row", (db_name, table_name),
-        default=False
+        request.actor, "update-row", (db_name, table_name), default=False
     ):
         raise Forbidden("update-row permissions required")
 
     if db_name is None:
-        return Response.json({"ok": False, "message": "db parameter is required"}, status=400)
+        return Response.json(
+            {"ok": False, "message": "db parameter is required"}, status=400
+        )
 
     if table_name is None:
-        return Response.json({"ok": False, "message": "table parameter is required"}, status=400)
+        return Response.json(
+            {"ok": False, "message": "table parameter is required"}, status=400
+        )
 
     if pks is None:
-        return Response.json({"ok": False, "message": "primaryKeys parameter is required"}, status=400)
-
+        return Response.json(
+            {"ok": False, "message": "primaryKeys parameter is required"}, status=400
+        )
 
     db = datasette.get_database(db_name)
 

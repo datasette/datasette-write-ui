@@ -10,4 +10,4 @@ students:
 
 dev: students
   DATASETTE_SECRET=abc123 watchexec --signal SIGKILL --restart --clear -e py,ts,html,js,css -- \
-    python3 -m datasette --root --plugins-dir=./datasette_write_ui tests/students.db
+    python3 -m datasette --root --plugins-dir=./datasette_write_ui tests/students.db #--setting base_url /abc/

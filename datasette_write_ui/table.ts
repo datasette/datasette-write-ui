@@ -7,17 +7,7 @@ import {
   editRowDetails,
   insertRowDetails,
 } from "./plugin-api";
-
-const permissionsElement = document.querySelector(
-  "script#datasette-write-ui-permissions"
-) as HTMLScriptElement;
-
-const permissions = JSON.parse(permissionsElement.textContent as string) as {
-  can_insert: boolean;
-  can_delete: boolean;
-  can_update: boolean;
-};
-
+import { PERMISSIONS } from "./config";
 class Modal {
   root: HTMLElement;
   body: HTMLElement;
@@ -265,7 +255,7 @@ function createDeleteHandler(db: string, table: string, primaryKeys: string) {
 
 const modal = new Modal();
 
-if (permissions.can_update || permissions.can_delete) {
+if (PERMISSIONS.can_update || PERMISSIONS.can_delete) {
   const primaryKeyRows = Array.from(
     document.querySelectorAll("table.rows-and-columns td.type-pk")
   );
@@ -276,18 +266,18 @@ if (permissions.can_update || permissions.can_delete) {
     const [db, table, primaryKeys] = href.split("/").slice(-3);
     const rowIcon = new RowIcon(primaryKeyRow);
 
-    if (permissions.can_update) {
+    if (PERMISSIONS.can_update) {
       const onEdit = createEditHandler(db, table, primaryKeys);
       rowIcon.addButton("Edit", onEdit);
     }
-    if (permissions.can_delete) {
+    if (PERMISSIONS.can_delete) {
       const onDelete = createDeleteHandler(db, table, primaryKeys);
       rowIcon.addButton("Delete", onDelete);
     }
   }
 }
 
-if (permissions.can_insert) {
+if (PERMISSIONS.can_insert) {
   const insertButton = document.querySelector(
     "#datasette-write-ui-insert-button"
   ) as HTMLButtonElement;

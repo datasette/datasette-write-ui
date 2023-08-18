@@ -1,3 +1,5 @@
+import { BASE_URL } from "./config";
+
 // helper function to suss out "real" datasette errors
 async function resultOf(response: Response) {
   const data: { ok: boolean; errors?: string[] } = await response.json();
@@ -13,7 +15,7 @@ export async function deleteRow(
   table: string,
   primaryKeys: string
 ) {
-  return fetch(`${baseUrl()}/${db}/${table}/${primaryKeys}/-/delete`, {
+  return fetch(`${BASE_URL}/${db}/${table}/${primaryKeys}/-/delete`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -27,7 +29,7 @@ export async function updateRow(
   primaryKeys: string,
   body: {}
 ) {
-  return fetch(`${baseUrl()}/${db}/${table}/${primaryKeys}/-/update`, {
+  return fetch(`${BASE_URL}/${db}/${table}/${primaryKeys}/-/update`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -41,7 +43,7 @@ export async function insertRow(
   table: string,
   row: { [key: string]: any }
 ) {
-  return fetch(`${baseUrl()}/${db}/${table}/-/insert`, {
+  return fetch(`${BASE_URL}/${db}/${table}/-/insert`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

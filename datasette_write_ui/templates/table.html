@@ -3,11 +3,12 @@
 {% block content %}
 {{ super() }}
 
-<script id="datasette-write-ui-permissions" type="application/json">{{
+<script id="datasette-write-ui-config" type="application/json">{{
     {
     "can_insert": permission_allowed(request.actor, 'insert-row'),
     "can_update": permission_allowed(request.actor, 'update-row'),
     "can_delete": permission_allowed(request.actor, 'delete-row'),
+    "base_url": base_url,
     }  | tojson
 }}</script>
 

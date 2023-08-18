@@ -6,7 +6,7 @@ import json
 
 def get_permission_from_table_html(html):
     """Extracts the datasette-write-ui "permissions" JSON that's injected into every table page"""
-    prefix = '<script id="datasette-write-ui-permissions" type="application/json">'
+    prefix = '<script id="datasette-write-ui-config" type="application/json">'
     suffix = "</script>"
     permissions = None
     for line in html.splitlines():
@@ -183,7 +183,10 @@ async def test_update_row_details_route(students_db_path):
         cookies={"ds_actor": datasette.sign(actor_root, "actor")},
     )
     assert response.status_code == 400
-    assert response.json() == {"ok": False, "message": "primaryKeys parameter is required"}
+    assert response.json() == {
+        "ok": False,
+        "message": "primaryKeys parameter is required",
+    }
 
     response = await datasette.client.get(
         "/-/datasette-write-ui/edit-row-details?db=students&primaryKeys=1",
