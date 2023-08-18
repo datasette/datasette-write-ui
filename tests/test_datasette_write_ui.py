@@ -201,3 +201,22 @@ async def test_update_row_details_route(students_db_path):
     )
     assert response.status_code == 400
     assert response.json() == {"ok": False, "message": "db parameter is required"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("base_url", (None, "/abc/"))
+async def test_base_url(students_db_path, base_url):
+    if base_url:
+        datasette = Datasette([students_db_path], settings={"base_url": base_url})
+    else:
+        datasette = Datasette([students_db_path])
+    # Check for correct /-/static path on several pages
+    for path in ("/", "/students", "/students/students"):
+        # datasette.client.get(path) automatically fixes the URL passed to it
+        # to respect base_url, so we don't need to change that here:
+        response = await datasette.client.get(path)
+        assert response.status_code == 200
+        expected_static_path = "/-/static"
+        if base_url:
+            expected_static_path = base_url.rstrip("/") + expected_static_path
+        assert expected_static_path in response.text
