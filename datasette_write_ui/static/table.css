@@ -60,10 +60,15 @@
   z-index: 1;
   background-color: #fefefe;
   border: 1px solid #888;
+  padding: 0.3em 0.3em 0px;
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 4px;
 }
 
 .row-icon .menu button {
   display: block;
+  margin-bottom: 0.3em;
+  width: 100%;
+  cursor: pointer;
 }
 
 td {
