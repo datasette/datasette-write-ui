@@ -17,10 +17,7 @@ def extra_template_vars(datasette, database, table):
     async def permission_allowed(actor, permission):
         return await datasette.permission_allowed(actor, permission, (database, table))
 
-    return {
-        "permission_allowed": permission_allowed,
-        "base_url": datasette.urls.instance()[:-1],
-    }
+    return {"permission_allowed": permission_allowed}
 
 
 def affinity_from_type(type):

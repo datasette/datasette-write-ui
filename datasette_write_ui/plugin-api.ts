@@ -16,7 +16,7 @@ export async function editRowDetails(
   primaryKeys: string
 ): Promise<EditRowDetailsResponse> {
   return fetch(
-    `${BASE_URL}/-/datasette-write-ui/edit-row-details?${new URLSearchParams({
+    `${BASE_URL}-/datasette-write-ui/edit-row-details?${new URLSearchParams({
       db,
       table,
       primaryKeys,
@@ -36,7 +36,7 @@ export async function insertRowDetails(
   table: string
 ): Promise<InsertRowDetailsResponse> {
   return fetch(
-    `${BASE_URL}/-/datasette-write-ui/insert-row-details?${new URLSearchParams({
+    `${BASE_URL}-/datasette-write-ui/insert-row-details?${new URLSearchParams({
       db,
       table,
     })}`
