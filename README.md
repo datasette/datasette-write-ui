@@ -42,15 +42,24 @@ If your actor has the `delete-row` permissions, you'll see a new "Delete row" op
 ## Development
 
 To set up this plugin locally, first checkout the code. Then create a new virtual environment:
-
-    cd datasette-write-ui
-    python3 -m venv venv
-    source venv/bin/activate
-
+```bash
+cd datasette-write-ui
+python3 -m venv venv
+source venv/bin/activate
+```
 Now install the dependencies and test dependencies:
-
-    pip install -e '.[test]'
-
+```
+pip install -e '.[test]'
+```
+To install the JavaScript build dependencies, run this:
+```bash
+npm install
+```
+You can use the [Just](https://github.com/casey/just) command runner to build the TypeScript to minified JavaScript like this:
+```bash
+just js
+```
 To run the tests:
-
-    pytest
+```bash
+pytest
+```
