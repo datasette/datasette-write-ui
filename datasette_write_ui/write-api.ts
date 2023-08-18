@@ -13,7 +13,7 @@ export async function deleteRow(
   table: string,
   primaryKeys: string
 ) {
-  return fetch(`/${db}/${table}/${primaryKeys}/-/delete`, {
+  return fetch(`${baseUrl()}/${db}/${table}/${primaryKeys}/-/delete`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -27,7 +27,7 @@ export async function updateRow(
   primaryKeys: string,
   body: {}
 ) {
-  return fetch(`/${db}/${table}/${primaryKeys}/-/update`, {
+  return fetch(`${baseUrl()}/${db}/${table}/${primaryKeys}/-/update`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -41,7 +41,7 @@ export async function insertRow(
   table: string,
   row: { [key: string]: any }
 ) {
-  return fetch(`/${db}/${table}/-/insert`, {
+  return fetch(`${baseUrl()}/${db}/${table}/-/insert`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

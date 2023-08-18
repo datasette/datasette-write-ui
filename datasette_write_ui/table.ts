@@ -273,7 +273,7 @@ if (permissions.can_update || permissions.can_delete) {
     const href = (
       primaryKeyRow.querySelector("a") as HTMLAnchorElement
     ).getAttribute("href") as string;
-    const [_, db, table, primaryKeys] = href.split("/");
+    const [db, table, primaryKeys] = href.split("/").slice(-3);
     const rowIcon = new RowIcon(primaryKeyRow);
 
     if (permissions.can_update) {
@@ -292,7 +292,7 @@ if (permissions.can_insert) {
     "#datasette-write-ui-insert-button"
   ) as HTMLButtonElement;
   insertButton.addEventListener("click", async () => {
-    const [_, db, table] = window.location.pathname.split("/");
+    const [db, table] = window.location.pathname.split("/").slice(-2);
     createInsertHandler(db, table)();
   });
 }
