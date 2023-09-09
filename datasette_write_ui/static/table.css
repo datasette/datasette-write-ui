@@ -63,7 +63,7 @@ td.type-pk {
   left: 0;
 }
 
-.row-icon .menu {
+.datasette-write-ui-menu {
   display: none;
   position: absolute;
   top: 1rem;
@@ -75,7 +75,7 @@ td.type-pk {
   box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 4px;
 }
 
-.row-icon .menu button {
+.datasette-write-ui-menu button {
   display: block;
   margin-bottom: 0.3em;
   width: 100%;
