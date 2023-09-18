@@ -71,13 +71,10 @@ class RowIcon {
     this.toggle = this.toggle.bind(this);
     this.addButton = this.addButton.bind(this);
 
-    this.root = html`<span class="row-icon">
-      <button class="icon">&#9881;</button>
-      <div class="menu"></div>
-    </span>`;
+    this.root = html`<span class="row-icon"><button class="icon">&#9881;</button><div class="datasette-write-ui-menu"></div></span>`;
     target.insertBefore(this.root, target.querySelector("a"));
     this.icon = this.root.querySelector(".icon") as HTMLElement;
-    this.menu = this.root.querySelector(".menu") as HTMLElement;
+    this.menu = this.root.querySelector(".datasette-write-ui-menu") as HTMLElement;
 
     // when icon is clicked, toggle the menu
     this.icon.addEventListener("click", (event) => {
@@ -103,18 +100,50 @@ class RowIcon {
 
   hide() {
     this.menu.style.display = "none";
+    this.menu.isShown = false;
   }
   show() {
+    // Close other menus
+    Array.from(document.querySelectorAll(".datasette-write-ui-menu")).forEach(
+      (menu) => {
+        menu.style.display = "none";
+        menu.isShown = false;
+      }
+    );
+    const wrapper = document.body;
     this.menu.style.display = "block";
+    this.menu.isShown = true;
+    absolutelyReparent(this.menu, wrapper);
   }
   toggle() {
-    if (this.menu.style.display === "block") this.hide();
-    else this.show();
+    if (this.menu.isShown) {
+      this.hide();
+    } else {
+      this.show();
+    }
   }
   addButton(label: string, callback: () => void) {
     this.menu.appendChild(html`<button onClick=${callback}>${label}</button>`);
     return this;
   }
+}
+
+function absolutelyReparent(child, parent) {
+  // Get the current position of the child element
+  const childRect = child.getBoundingClientRect();
+  const parentRect = parent.getBoundingClientRect();
+
+  // Calculate the new position of the child relative to the parent
+  const newTop = childRect.top - parentRect.top;
+  const newLeft = childRect.left - parentRect.left;
+
+  // Set the child to be absolutely positioned within the parent
+  child.style.position = 'absolute';
+  child.style.top = newTop + 'px';
+  child.style.left = newLeft + 'px';
+
+  // Append the child to the parent
+  parent.appendChild(child);
 }
 
 function inputForField(field: EditRowDetailsField) {
