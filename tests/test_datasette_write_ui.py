@@ -61,7 +61,7 @@ async def test_plugin_is_installed():
 async def test_permissions(students_db_path):
     datasette = Datasette(
         [students_db_path],
-        metadata=students_metadata,
+        config=students_metadata,
     )
     response = await datasette.client.get("/students/students")
     permissions = get_permission_from_table_html(response.text)
