@@ -33,7 +33,7 @@
   cursor: pointer;
 }
 
-td.type-pk {
+table.rows-and-columns td.type-pk {
   position: relative;
   padding-left: 1.5em;
 }
