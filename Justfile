@@ -9,5 +9,5 @@ students:
   sqlite3 tests/students.db < tests/students.sql
 
 dev: students
-  DATASETTE_SECRET=abc123 watchexec --signal SIGKILL --restart --clear -e py,ts,html,js,css -- \
+  DATASETTE_SECRET=abc123 watchexec --restart --clear -e py,ts,html,js,css -- \
     python3 -m datasette --root --plugins-dir=./datasette_write_ui tests/students.db #--setting base_url /abc/
