@@ -285,21 +285,32 @@ function createDeleteHandler(db: string, table: string, primaryKeys: string) {
 const modal = new Modal();
 
 if (PERMISSIONS.can_update || PERMISSIONS.can_delete) {
-  const primaryKeyRows = Array.from(
-    document.querySelectorAll("table.rows-and-columns td.type-pk")
+  const tableRows:HTMLTableRowElement[] = Array.from(
+    document.querySelectorAll("table.rows-and-columns tbody tr")
   );
-  for (const primaryKeyRow of primaryKeyRows) {
+  // loop through all tbody rows 
+  for (const tableRow of tableRows) {
+    const pkCell = tableRow.querySelector('td.type-pk');
     const href = (
-      primaryKeyRow.querySelector("a") as HTMLAnchorElement
+      pkCell.querySelector("a") as HTMLAnchorElement
     ).getAttribute("href") as string;
     const [db, table, primaryKeys] = href.split("/").slice(-3);
-    const rowIcon = new RowIcon(primaryKeyRow);
 
+    
+    const rowIcon = new RowIcon(pkCell);
+    
     if (PERMISSIONS.can_update) {
+      // Add "Edit" button to the row icon
       const onEdit = createEditHandler(db, table, primaryKeys);
       rowIcon.addButton("Edit", onEdit);
+      
+      // on shift+click, open the edit model for the given row
+      tableRow.addEventListener('click', e => {
+        if(e.shiftKey) onEdit();
+      });
     }
     if (PERMISSIONS.can_delete) {
+      // Add "Delete" button to the row icon
       const onDelete = createDeleteHandler(db, table, primaryKeys);
       rowIcon.addButton("Delete", onDelete);
     }
