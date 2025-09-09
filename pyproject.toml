@@ -4,7 +4,7 @@ version = "0.0.1a12"
 description = "Datasette UI plugin for editing and inserting rows"
 readme = "README.md"
 authors = [{name = "Alex Garcia"}]
-license = "Apache-2.0"
+license = {file = "LICENSE"}
 classifiers=[
     "Framework :: Datasette",
 ]
