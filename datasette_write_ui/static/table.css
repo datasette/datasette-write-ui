@@ -38,6 +38,13 @@ table.rows-and-columns td.type-pk {
   padding-left: 1.5em;
 }
 
+@media only screen and (max-width: 576px) {
+  table.rows-and-columns td.type-pk {
+    position: unset;
+    padding-left: unset;
+  }
+}
+
 .row-icon {
   position: absolute;
   left: 0;

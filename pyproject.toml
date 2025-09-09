@@ -1,0 +1,45 @@
+[project]
+name = "datasette-write-ui"
+version = "0.0.1a12"
+description = "Datasette UI plugin for editing and inserting rows"
+readme = "README.md"
+authors = [{name = "Alex Garcia"}]
+license = "Apache-2.0"
+classifiers=[
+    "Framework :: Datasette",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "datasette>=1.0a19",
+    "sqlite-utils>=3.38",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+Homepage = "https://github.com/datasette/datasettewrite-ui"
+Changelog = "https://github.com/datasette/datasettewrite-ui/releases"
+Issues = "https://github.com/datasette/datasettewrite-ui/issues"
+CI = "https://github.com/datasette/datasettewrite-ui/actions"
+
+[project.entry-points.datasette]
+write_ui = "datasette_write_ui"
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-asyncio"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.setuptools.package-data]
+datasette_write_ui = ["static/*", "templates/*"]
+
+
+# find exclude node_modules
+[tool.setuptools.packages.find]
+exclude = [
+    "node_modules",
+]
