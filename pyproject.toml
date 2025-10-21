@@ -1,6 +1,6 @@
 [project]
 name = "datasette-write-ui"
-version = "0.0.1a12"
+version = "0.0.1a13"
 description = "Datasette UI plugin for editing and inserting rows"
 readme = "README.md"
 authors = [{name = "Alex Garcia"}]
@@ -10,7 +10,7 @@ classifiers=[
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "datasette>=1.0a19",
+    "datasette==1.0a19",
     "sqlite-utils>=3.38",
 ]
 
