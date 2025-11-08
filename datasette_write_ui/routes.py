@@ -52,12 +52,10 @@ async def edit_row_details(scope, receive, datasette, request):
             {"ok": False, "message": "table parameter is required"}, status=400
         )
 
-    table_resource = TableResource(database=db_name, table=table_name)
-
     if not await datasette.allowed(
         actor=request.actor,
         action="update-row",
-        resource=table_resource,
+        resource=TableResource(database=db_name, table=table_name),
     ):
         raise Forbidden("update-row permissions required")
 
@@ -149,12 +147,10 @@ async def insert_row_details(scope, receive, datasette, request):
             {"ok": False, "message": "table parameter is required"}, status=400
         )
 
-    table_resource = TableResource(database=db_name, table=table_name)
-
     if not await datasette.allowed(
         actor=request.actor,
         action="insert-row",
-        resource=table_resource,
+        resource=TableResource(database=db_name, table=table_name),
     ):
         raise Forbidden("insert-row permissions required")
 
