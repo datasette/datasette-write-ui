@@ -2,6 +2,7 @@ from datasette import Response, Forbidden
 from datasette.utils import escape_sqlite, tilde_decode
 from typing import Any, TypedDict
 
+
 def affinity_from_type(type):
     """
     Return the "affinity" a SQLite column type has.
@@ -23,8 +24,6 @@ def affinity_from_type(type):
     return "numeric"
 
 
-
-
 class EditRowDetailsField(TypedDict):
     """
     Each "field" returned for every editable column in the edit-row-details route.
@@ -35,6 +34,7 @@ class EditRowDetailsField(TypedDict):
     type: str
     pk: bool
     editable: bool
+
 
 async def edit_row_details(scope, receive, datasette, request):
     db_name = request.args.get("db")
