@@ -1,4 +1,5 @@
 from datasette import hookimpl
+from datasette.resources import TableResource
 from . import routes
 
 
@@ -12,7 +13,13 @@ def register_routes():
 
 @hookimpl
 def extra_template_vars(datasette, database, table):
+    table_resource = TableResource(database=database, table=table)
+
     async def permission_allowed(actor, permission):
-        return await datasette.permission_allowed(actor, permission, (database, table))
+        return await datasette.allowed(
+            actor=actor,
+            action=permission,
+            resource=table_resource,
+        )
 
     return {"permission_allowed": permission_allowed}

@@ -39,7 +39,9 @@ def students_db_path(tmpdir):
 students_metadata = {
     "databases": {
         "students": {
-            "tables": {"students": {"permissions": {"insert-row": {"id": "apollo"}}}}
+            "tables": {
+                "students": {"permissions": {"insert-row": {"id": ["apollo", "root"]}}}
+            }
         }
     }
 }
@@ -63,6 +65,7 @@ async def test_permissions(students_db_path):
         [students_db_path],
         config=students_metadata,
     )
+    datasette.root_enabled = True
     response = await datasette.client.get("/students/students")
     permissions = get_permission_from_table_html(response.text)
     assert permissions["can_delete"] == False
@@ -100,6 +103,7 @@ async def test_permissions(students_db_path):
 @pytest.mark.asyncio
 async def test_insert_row_details_route(students_db_path):
     datasette = Datasette([students_db_path])
+    datasette.root_enabled = True
 
     response = await datasette.client.get(
         "/-/datasette-write-ui/insert-row-details?db=students&table=students",
@@ -123,6 +127,7 @@ async def test_insert_row_details_route(students_db_path):
 @pytest.mark.asyncio
 async def test_update_row_details_route(students_db_path):
     datasette = Datasette([students_db_path])
+    datasette.root_enabled = True
 
     response = await datasette.client.get(
         "/-/datasette-write-ui/edit-row-details?db=students&table=students",
