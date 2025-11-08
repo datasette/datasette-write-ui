@@ -1,6 +1,8 @@
 from datasette import Response, Forbidden
+from datasette.resources import TableResource
 from datasette.utils import escape_sqlite, tilde_decode
 from typing import Any, TypedDict
+
 
 def affinity_from_type(type):
     """
@@ -23,8 +25,6 @@ def affinity_from_type(type):
     return "numeric"
 
 
-
-
 class EditRowDetailsField(TypedDict):
     """
     Each "field" returned for every editable column in the edit-row-details route.
@@ -36,15 +36,11 @@ class EditRowDetailsField(TypedDict):
     pk: bool
     editable: bool
 
+
 async def edit_row_details(scope, receive, datasette, request):
     db_name = request.args.get("db")
     table_name = request.args.get("table")
     pks = request.args.get("primaryKeys")
-
-    if not await datasette.permission_allowed(
-        request.actor, "update-row", (db_name, table_name), default=False
-    ):
-        raise Forbidden("update-row permissions required")
 
     if db_name is None:
         return Response.json(
@@ -55,6 +51,13 @@ async def edit_row_details(scope, receive, datasette, request):
         return Response.json(
             {"ok": False, "message": "table parameter is required"}, status=400
         )
+
+    if not await datasette.allowed(
+        actor=request.actor,
+        action="update-row",
+        resource=TableResource(database=db_name, table=table_name),
+    ):
+        raise Forbidden("update-row permissions required")
 
     if pks is None:
         return Response.json(
@@ -134,8 +137,20 @@ async def insert_row_details(scope, receive, datasette, request):
     db_name = request.args.get("db")
     table_name = request.args.get("table")
 
-    if not await datasette.permission_allowed(
-        request.actor, "insert-row", (db_name, table_name)
+    if db_name is None:
+        return Response.json(
+            {"ok": False, "message": "db parameter is required"}, status=400
+        )
+
+    if table_name is None:
+        return Response.json(
+            {"ok": False, "message": "table parameter is required"}, status=400
+        )
+
+    if not await datasette.allowed(
+        actor=request.actor,
+        action="insert-row",
+        resource=TableResource(database=db_name, table=table_name),
     ):
         raise Forbidden("insert-row permissions required")
 
@@ -151,8 +166,4 @@ async def insert_row_details(scope, receive, datasette, request):
             InsertRowDetailField(name=name, affinity=affinity_from_type(type))
         )
 
-    return Response.json(
-        {
-            "fields": insertable_columns,
-        }
-    )
+    return Response.json({"fields": insertable_columns})

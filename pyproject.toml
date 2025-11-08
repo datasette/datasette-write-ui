@@ -4,13 +4,13 @@ version = "0.0.1a13"
 description = "Datasette UI plugin for editing and inserting rows"
 readme = "README.md"
 authors = [{name = "Alex Garcia"}]
-license = {file = "LICENSE"}
+license = "Apache-2.0"
 classifiers=[
     "Framework :: Datasette",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
-    "datasette==1.0a19",
+    "datasette>=1.0a21",
     "sqlite-utils>=3.38",
 ]
 
