@@ -33,6 +33,19 @@ def students_db_path(tmpdir):
             {"name": "MATH 102"},
         ]
     )
+    db.execute(
+        "create table enrollments("
+        "  student_name text, course_name text, grade text,"
+        "  primary key (student_name, course_name)"
+        ") without rowid"
+    )
+    db["enrollments"].insert_all(
+        [
+            {"student_name": "alex", "course_name": "MATH 101", "grade": "A"},
+            {"student_name": "alex", "course_name": "MATH 102", "grade": "B"},
+            {"student_name": "brian", "course_name": "MATH 101", "grade": "C"},
+        ]
+    )
     return path
 
 
@@ -206,6 +219,60 @@ async def test_update_row_details_route(students_db_path):
     )
     assert response.status_code == 400
     assert response.json() == {"ok": False, "message": "db parameter is required"}
+
+
+@pytest.mark.asyncio
+async def test_edit_row_details_compound_primary_key(students_db_path):
+    datasette = Datasette([students_db_path])
+    datasette.root_enabled = True
+
+    # Compound PK: student_name=alex, course_name=MATH 101
+    response = await datasette.client.get(
+        "/-/datasette-write-ui/edit-row-details?db=students&table=enrollments&primaryKeys=alex,MATH+101",
+        cookies={"ds_actor": datasette.sign(actor_root, "actor")},
+    )
+    assert response.status_code == 200
+    assert response.json() == {
+        "fields": [
+            {
+                "key": "student_name",
+                "value": "alex",
+                "type": "str",
+                "pk": True,
+                "editable": False,
+            },
+            {
+                "key": "course_name",
+                "value": "MATH 101",
+                "type": "str",
+                "pk": True,
+                "editable": False,
+            },
+            {
+                "key": "grade",
+                "value": "A",
+                "type": "str",
+                "pk": False,
+                "editable": True,
+            },
+        ]
+    }
+
+    # Second compound PK row: student_name=alex, course_name=MATH 102
+    response = await datasette.client.get(
+        "/-/datasette-write-ui/edit-row-details?db=students&table=enrollments&primaryKeys=alex,MATH+102",
+        cookies={"ds_actor": datasette.sign(actor_root, "actor")},
+    )
+    assert response.status_code == 200
+    assert response.json()["fields"][2]["value"] == "B"
+
+    # Non-existent compound PK
+    response = await datasette.client.get(
+        "/-/datasette-write-ui/edit-row-details?db=students&table=enrollments&primaryKeys=nobody,MATH+101",
+        cookies={"ds_actor": datasette.sign(actor_root, "actor")},
+    )
+    assert response.status_code == 400
+    assert response.json() == {"ok": False, "message": "No matching row found."}
 
 
 @pytest.mark.asyncio

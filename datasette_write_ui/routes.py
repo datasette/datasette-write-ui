@@ -86,11 +86,18 @@ async def edit_row_details(scope, receive, datasette, request):
         )
     ]
 
-    # TODO only works in single primary key tables
-    id_column = "rowid" if len(pk_columns) == 0 else pk_columns[0]
+    if len(pk_columns) == 0:
+        where_clause = "rowid = ?"
+        where_params = [tilde_decode(pks)]
+    else:
+        pk_values = [tilde_decode(p) for p in pks.split(",")]
+        where_clause = " and ".join(
+            f"{escape_sqlite(col)} = ?" for col in pk_columns
+        )
+        where_params = pk_values
     results = await db.execute(
-        f"select {column_list} from {table_name} where {escape_sqlite(id_column)} = ?",
-        [tilde_decode(pks)],
+        f"select {column_list} from {table_name} where {where_clause}",
+        where_params,
     )
 
     fields = []
