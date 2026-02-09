@@ -13,3 +13,4 @@ build
 
 *.db
 node_modules/
+uv.lock
